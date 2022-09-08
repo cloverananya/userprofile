@@ -26,7 +26,7 @@ class Profile(models.Model):
             ('Male', 'Boy'),
             ('Female', 'Girl'),
         )
-        user = models.OneToOneField(User, on_delete=models.CASCADE,primary_key=True)
+        user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True, related_name='profile')
         gender = models.CharField(max_length=10, choices=GENDER)
         number = models.PositiveIntegerField()
         fav_actor = models.CharField(max_length=250)
