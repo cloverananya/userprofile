@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-
 #
 #
 # class ProfileSerializer(serializers.ModelSerializer):
@@ -72,25 +71,43 @@ GENDER = (
 )
 
 
-class RegistrationSerializers(serializers.Serializer):
-
-    email = serializers.EmailField()
-    password = serializers.CharField(max_length=250)
-    name = serializers.CharField(max_length=250)
-    gender = serializers.ChoiceField(choices=GENDER)
-    number = serializers.IntegerField()
-    fav_actor = serializers.CharField(max_length=250)
-    date_of_birth = serializers.DateField()
-    image = serializers.ImageField()
-
-
-class ProfileSerializers(serializers.ModelSerializer):
-    email = serializers.PrimaryKeyRelatedField(source='user.email', read_only=True)
-    user = serializers.PrimaryKeyRelatedField(source='user.name', read_only=True)
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ('user', 'gender', 'number', 'fav_actor', 'date_of_birth', 'image', 'email')
+        fields = ('gender', 'number', 'fav_actor', 'date_of_birth', 'image',)
 
-    # def save(self, **kwargs):
-    #     pass
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer()
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'name', 'profile']
+
+    def create(self, validated_data):
+        profile_data = validated_data.pop('profile')
+        user = User.objects.create(**validated_data)
+        Profile.objects.create(user=user, **profile_data)
+        return user
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile')
+        try:
+            profile = instance.profile
+
+            if profile:
+                profile.gender = profile_data.get('gender', profile.gender)
+                profile.number = profile_data.get('number', profile.number)
+                profile.fav_actor = profile_data.get('fav_actor', profile.fav_actor)
+                profile.date_of_birth = profile_data.get('date_of_birth', profile.date_of_birth)
+                profile.image = profile_data.get('image', profile.image)
+                profile.save()
+
+            instance.name = validated_data.get('name', instance.name)
+            instance.email = validated_data.get('email', instance.email)
+            instance.save()
+
+        except Profile.DoesNotExist:
+            pass
+        return super().update(instance, validated_data)
 
