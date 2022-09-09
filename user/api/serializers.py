@@ -103,11 +103,12 @@ class UserSerializer(serializers.ModelSerializer):
                 profile.image = profile_data.get('image', profile.image)
                 profile.save()
 
+        except Profile.DoesNotExist:
+            pass
+
             instance.name = validated_data.get('name', instance.name)
             instance.email = validated_data.get('email', instance.email)
             instance.save()
 
-        except Profile.DoesNotExist:
-            pass
         return super().update(instance, validated_data)
 
